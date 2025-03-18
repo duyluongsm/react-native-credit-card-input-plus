@@ -44,7 +44,7 @@
     "lodash.pick": "^4.4.0",
     "lodash.values": "^4.3.0",
     "prop-types": "^15.6.0",
-    "react-native": "^0.73.6"
+    "react-native": "*"
   },
   "devDependencies": {
     "babel-eslint": "^5.0.0",
