@@ -45,7 +45,7 @@
     "lodash.values": "^4.3.0",
     "react": "18.2.0",
     "react-native": "0.74.3",
-    "prop-types": "^15.6.0",
+    "prop-types": "^15.6.0"
   },
   "peerDependencies": {
     "react": "*",
