@@ -37,6 +37,7 @@ export default class CCInput extends Component {
     invalidColor: PropTypes.string,
     placeholderColor: PropTypes.string,
 
+    onLayout: PropTypes.func,
     onFocus: PropTypes.func,
     onChange: PropTypes.func,
     onBecomeEmpty: PropTypes.func,
@@ -51,6 +52,7 @@ export default class CCInput extends Component {
     containerStyle: {},
     inputStyle: {},
     labelStyle: {},
+    onLayout: () => {},
     onFocus: () => {},
     onChange: () => {},
     onBecomeEmpty: () => {},
@@ -58,15 +60,14 @@ export default class CCInput extends Component {
     additionalInputProps: {},
   };
 
-  UNSAFE_componentWillReceiveProps = (newProps) => {
+  componentDidUpdate(prevProps) {
     const { status, value, onBecomeEmpty, onBecomeValid, field } = this.props;
-    const { status: newStatus, value: newValue } = newProps;
 
-    if (value !== "" && newValue === "") onBecomeEmpty(field);
-    if (status !== "valid" && newStatus === "valid") onBecomeValid(field);
-  };
+    if (value !== "" && prevProps.value === "") onBecomeEmpty(field);
+    if (status !== "valid" && prevProps.status === "valid") onBecomeValid(field);
+  }
 
-  focus = () => this.refs.input.focus();
+  focus = () => this.inputRef.focus();
 
   _onFocus = () => this.props.onFocus(this.props.field);
   _onChange = (value) => this.props.onChange(this.props.field, value);
@@ -84,18 +85,19 @@ export default class CCInput extends Component {
       validColor,
       invalidColor,
       placeholderColor,
+      onLayout,
       additionalInputProps,
     } = this.props;
 
     return (
-      <TouchableOpacity onPress={this.focus} activeOpacity={0.99}>
-        <View style={[containerStyle]}>
+      <TouchableOpacity onPress={() => this.inputRef.focus()} activeOpacity={0.99}>
+        <View onLayout={onLayout} style={[containerStyle]}>
           {!!label && <Text style={[labelStyle]}>{label}</Text>}
           <TextInput
-            ref="input"
+            ref={(ref) => { this.inputRef = ref; }}
             {...additionalInputProps}
             keyboardType={keyboardType}
-            autoCapitalise="words"
+            autoCapitalize="words"
             autoCorrect={false}
             style={[
               s.baseInputStyle,
