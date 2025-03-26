@@ -50,30 +50,25 @@ const NAME_INPUT_WIDTH = CARD_NUMBER_INPUT_WIDTH;
 const PREVIOUS_FIELD_OFFSET = 40;
 const POSTAL_CODE_INPUT_WIDTH = 120;
 
-/* eslint react/prop-types: 0 */ // https://github.com/yannickcr/eslint-plugin-react/issues/106
+/* eslint react/prop-types: 0 */
 export default class CreditCardInput extends Component {
   static propTypes = {
     ...InjectedProps,
     labels: PropTypes.object,
     placeholders: PropTypes.object,
-
     inputStyle: TextInputPropTypes.style,
     labelStyle: TextInputPropTypes.style,
     inputContainerStyle: ViewPropTypes.style,
-
     validColor: PropTypes.string,
     invalidColor: PropTypes.string,
     placeholderColor: PropTypes.string,
-
     cardImageFront: PropTypes.number,
     cardImageBack: PropTypes.number,
     cardScale: PropTypes.number,
     cardFontFamily: PropTypes.string,
     cardBrandIcons: PropTypes.object,
-
     allowScroll: PropTypes.bool,
     horizontalScroll: PropTypes.bool,
-
     additionalInputsProps: PropTypes.objectOf(PropTypes.shape(TextInputPropTypes)),
   };
 
@@ -112,21 +107,17 @@ export default class CreditCardInput extends Component {
     if (!field) return;
 
     const scrollResponder = this.refs.Form.getScrollResponder();
-    const nodeHandle = ReactNative.findNodeHandle(this.refs[field]);
+    const inputRef = this.refs[field];
 
-    NativeModules.UIManager.measureLayoutRelativeToParent(
-      nodeHandle,
-      (e) => {
-        throw e;
-      },
-      (x) => {
-        scrollResponder.scrollTo({
-          x: Math.max(x - PREVIOUS_FIELD_OFFSET, 0),
-          animated: true,
-        });
-        this.refs[field].focus();
-      }
-    );
+    if (!inputRef) return;
+
+    inputRef.measure((x, y, width, height, pageX) => {
+      scrollResponder.scrollTo({
+        x: Math.max(pageX - PREVIOUS_FIELD_OFFSET, 0),
+        animated: true,
+      });
+      inputRef.focus();
+    });
   };
 
   _inputProps = (field) => {
@@ -155,17 +146,14 @@ export default class CreditCardInput extends Component {
       placeholderColor,
       ref: field,
       field,
-
       label: labels[field],
       placeholder: placeholders[field],
       value: values[field],
       status: status[field],
-
       onFocus,
       onChange,
       onBecomeEmpty,
       onBecomeValid,
-
       additionalInputProps: additionalInputsProps[field],
     };
   };
@@ -173,7 +161,6 @@ export default class CreditCardInput extends Component {
   getStylesCCInput = ({ defaultWidth }) => {
     let _styles = [s.inputContainer];
 
-    // If horizontal is opn
     if (this.props.horizontalScroll) {
       _styles.push({
         marginLeft: 10,
