@@ -1,11 +1,11 @@
-import React, { Component } from "react";
+import React, { Component, createRef } from "react";
 import PropTypes from "prop-types";
-import ReactNative, {
-  NativeModules,
+import {
   View,
   StyleSheet,
   ScrollView,
   Dimensions,
+  Platform,
 } from "react-native";
 
 import {
@@ -50,25 +50,43 @@ const NAME_INPUT_WIDTH = CARD_NUMBER_INPUT_WIDTH;
 const PREVIOUS_FIELD_OFFSET = 40;
 const POSTAL_CODE_INPUT_WIDTH = 120;
 
-/* eslint react/prop-types: 0 */
 export default class CreditCardInput extends Component {
+  constructor(props) {
+    super(props);
+    this.formRef = createRef();
+    this.inputRefs = {
+      number: createRef(),
+      expiry: createRef(),
+      cvc: createRef(),
+      name: createRef(),
+      postalCode: createRef(),
+    };
+    
+    this.inputLayouts = {};
+  }
+
   static propTypes = {
     ...InjectedProps,
     labels: PropTypes.object,
     placeholders: PropTypes.object,
+
     inputStyle: TextInputPropTypes.style,
     labelStyle: TextInputPropTypes.style,
     inputContainerStyle: ViewPropTypes.style,
+
     validColor: PropTypes.string,
     invalidColor: PropTypes.string,
     placeholderColor: PropTypes.string,
+
     cardImageFront: PropTypes.number,
     cardImageBack: PropTypes.number,
     cardScale: PropTypes.number,
     cardFontFamily: PropTypes.string,
     cardBrandIcons: PropTypes.object,
+
     allowScroll: PropTypes.bool,
     horizontalScroll: PropTypes.bool,
+
     additionalInputsProps: PropTypes.objectOf(PropTypes.shape(TextInputPropTypes)),
   };
 
@@ -97,27 +115,40 @@ export default class CreditCardInput extends Component {
     additionalInputsProps: {},
   };
 
-  componentDidMount = () => this._focus(this.props.focused);
+  componentDidMount() {
+    this._focus(this.props.focused);
+  }
 
-  UNSAFE_componentWillReceiveProps = (newProps) => {
-    if (this.props.focused !== newProps.focused) this._focus(newProps.focused);
-  };
+  componentDidUpdate(prevProps) {
+    if (this.props.focused !== prevProps.focused) {
+      this._focus(this.props.focused);
+    }
+  }
+
+  _onInputLayout = (field, event) => {
+    const {nativeEvent: {layout}} = event;
+    this.inputLayouts[field] = layout;
+  }
 
   _focus = (field) => {
     if (!field) return;
 
-    const scrollResponder = this.refs.Form.getScrollResponder();
-    const inputRef = this.refs[field];
+    const scrollRef = this.formRef.current;
+    const inputRef = this.inputRefs[field].current;
 
-    if (!inputRef) return;
-
-    inputRef.measure((x, y, width, height, pageX) => {
-      scrollResponder.scrollTo({
-        x: Math.max(pageX - PREVIOUS_FIELD_OFFSET, 0),
-        animated: true,
-      });
+    if (scrollRef && inputRef) {
+      // Focus the input
       inputRef.focus();
-    });
+
+      // Scroll to the input if possible
+      if (this.inputLayouts[field]) {
+        const layout = this.inputLayouts[field];
+        scrollRef.scrollTo({
+          x: Math.max(layout.x - PREVIOUS_FIELD_OFFSET, 0),
+          animated: true,
+        });
+      }
+    }
   };
 
   _inputProps = (field) => {
@@ -139,21 +170,25 @@ export default class CreditCardInput extends Component {
     } = this.props;
 
     return {
+      ref: this.inputRefs[field],
+      onLayout: (event) => this._onInputLayout(field, event),
       inputStyle: [s.input, inputStyle],
       labelStyle: [s.inputLabel, labelStyle],
       validColor,
       invalidColor,
       placeholderColor,
-      ref: field,
       field,
+
       label: labels[field],
       placeholder: placeholders[field],
       value: values[field],
       status: status[field],
+
       onFocus,
       onChange,
       onBecomeEmpty,
       onBecomeValid,
+
       additionalInputProps: additionalInputsProps[field],
     };
   };
@@ -161,6 +196,7 @@ export default class CreditCardInput extends Component {
   getStylesCCInput = ({ defaultWidth }) => {
     let _styles = [s.inputContainer];
 
+    // If horizontal scroll is on
     if (this.props.horizontalScroll) {
       _styles.push({
         marginLeft: 10,
@@ -210,7 +246,7 @@ export default class CreditCardInput extends Component {
         </View>
 
         <ScrollView
-          ref="Form"
+          ref={this.formRef}
           horizontal={horizontalScroll}
           keyboardShouldPersistTaps="always"
           scrollEnabled={allowScroll}
